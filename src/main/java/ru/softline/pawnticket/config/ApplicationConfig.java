@@ -1,0 +1,8 @@
+package ru.softline.pawnticket.config;
+
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class ApplicationConfig {
+    // Конфигурация приложения
+}
