@@ -1,0 +1,58 @@
+Регистрация нового пользователя
+
+curl.exe --location 'http://localhost:8080/api/auth/signup?username=testuser&email=test%40example.com&password=password123&firstName=Test&lastName=User' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "username": "zuev",
+    "email": "zuev@example.com",
+    "password": "password123",
+    "firstName": "Ivan",
+    "lastName": "Zuev"
+}'
+
+
+Вход в систему (получение токена)
+
+curl.exe --location "http://localhost:8080/api/auth/login" --header "Content-Type: application/json" --data "{"username": "petrov","password": "password123"}"
+
+
+Создание залогового билета (с токеном)
+
+curl.exe --location "http://localhost:8080/api/pawn-tickets" `
+--header 'Content-Type: application/json' `
+--header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c" `
+--data "{`
+    "itemDescription": "CASIO, сталь, 2022 год",`
+    "loanAmount": 4500.00,`
+    "interestRate": 1.7,`
+    "expiryDate": "2025-12-03T23:59:59"`
+}"
+
+
+curl.exe --location "http://localhost:8080/api/pawn-tickets" --header 'Content-Type: application/json' --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c" --data "{"itemDescription": "CASIO, сталь, 2022 год","loanAmount": 4500.00,"interestRate": 1.7,"expiryDate": "2025-12-03T23:59:59"}"
+
+
+
+Список всех пользователей
+
+curl.exe --location "http://localhost:8080/api/users" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c"
+
+
+Получить пользователя по ID
+
+curl.exe --location "http://localhost:8080/api/users/3" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c"
+
+
+Текущий пользователь
+
+curl.exe --location "http://localhost:8080/api/users/me" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njc5NzUsImV4cCI6MTc0OTg1NDM3NX0.sUAOTsVoYUIR-KmIPsbXF2ncE1K1__BXwwUdmd3_iH8"
+
+
+Удалить пользователя
+
+curl.exe --location --request DELETE "http://localhost:8080/api/users/3" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c"
+
+
+Проверка доступа без токена
+
+curl.exe --location http://localhost:8080 -v
