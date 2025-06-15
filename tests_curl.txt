@@ -56,3 +56,5 @@ curl.exe --location --request DELETE "http://localhost:8080/api/users/3" --heade
 Проверка доступа без токена
 
 curl.exe --location http://localhost:8080 -v
+
+curl.exe --location http://localhost:8080 -v
