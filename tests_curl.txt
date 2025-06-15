@@ -1,6 +1,6 @@
 Регистрация нового пользователя
 
-curl.exe --location 'http://localhost:8080/api/auth/signup?username=testuser&email=test%40example.com&password=password123&firstName=Test&lastName=User' \
+curl --location 'http://localhost:8080/api/auth/signup' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "username": "zuev",
@@ -10,42 +10,61 @@ curl.exe --location 'http://localhost:8080/api/auth/signup?username=testuser&ema
     "lastName": "Zuev"
 }'
 
-
 Вход в систему (получение токена)
 
-curl.exe --location "http://localhost:8080/api/auth/login" --header "Content-Type: application/json" --data "{"username": "petrov","password": "password123"}"
+curl --location 'http://localhost:8080/api/auth/login' \
+--header 'Content-Type: application/json' \
+--data '{
+    "username": "zuev",
+    "password": "password123"
+}'
 
+ПРИМЕРЫ результата
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJpdmFub3YiLCJpYXQiOjE3NTAwMTU3MDMsImV4cCI6MTc1MDEwMjEwM30.MC6NavUNH86CZ5jH4A2RC4A7ZJHr4VBtelgyyKuELSo",
+    "expiresIn": 86400000
+}
+
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NTAwMTAxNzEsImV4cCI6MTc1MDA5NjU3MX0.YTnQUvN07Nj7I7ApEsVLmw_oetM2We9KZaW4KNWC-Nk",
+    "expiresIn": 86400000
+}
+
+
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ2ZWtpbiIsImlhdCI6MTc1MDAxMTg2MCwiZXhwIjoxNzUwMDk4MjYwfQ._8cmJA3T2ZsHSf1jjDu5dFKDIX2n2Fu_n4vP2IqPZg4",
+    "expiresIn": 86400000
+}
 
 Создание залогового билета (с токеном)
 
-curl.exe --location "http://localhost:8080/api/pawn-tickets" `
---header 'Content-Type: application/json' `
---header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c" `
---data "{`
-    "itemDescription": "CASIO, сталь, 2022 год",`
-    "loanAmount": 4500.00,`
-    "interestRate": 1.7,`
-    "expiryDate": "2025-12-03T23:59:59"`
-}"
-
-
-curl.exe --location "http://localhost:8080/api/pawn-tickets" --header 'Content-Type: application/json' --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c" --data "{"itemDescription": "CASIO, сталь, 2022 год","loanAmount": 4500.00,"interestRate": 1.7,"expiryDate": "2025-12-03T23:59:59"}"
-
+curl --location 'http://localhost:8080/api/pawn-tickets' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6dWV2IiwiaWF0IjoxNzUwMDA5MDc1LCJleHAiOjE3NTAwOTU0NzV9.XiIMjvc4IXbZ50Og3fHSTbN3eStVXR5qgLerPteYx6U' \
+--data '{
+    "itemDescription": "CASIO, сталь, 2022 год",
+    "loanAmount": 4500.00,
+    "interestRate": 1.7,
+    "expiryDate": "2025-12-03T23:59:59"
+}'
 
 
 Список всех пользователей
 
-curl.exe --location "http://localhost:8080/api/users" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c"
+curl --location 'http://localhost:8080/api/users' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6dWV2IiwiaWF0IjoxNzUwMDA5MDc1LCJleHAiOjE3NTAwOTU0NzV9.XiIMjvc4IXbZ50Og3fHSTbN3eStVXR5qgLerPteYx6U'
 
 
 Получить пользователя по ID
 
-curl.exe --location "http://localhost:8080/api/users/3" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njg4MzYsImV4cCI6MTc0OTg1NTIzNn0.CjvjvBUr4pgwodnKVEvshkVYtfgwtgNNFa-9LKtyY4c"
+curl --location 'http://localhost:8080/api/users/1' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6dWV2IiwiaWF0IjoxNzUwMDA5MDc1LCJleHAiOjE3NTAwOTU0NzV9.XiIMjvc4IXbZ50Og3fHSTbN3eStVXR5qgLerPteYx6U'
 
 
-Текущий пользователь
+Определить пользователя по токену
 
-curl.exe --location "http://localhost:8080/api/users/me" --header "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXRyb3YiLCJpYXQiOjE3NDk3Njc5NzUsImV4cCI6MTc0OTg1NDM3NX0.sUAOTsVoYUIR-KmIPsbXF2ncE1K1__BXwwUdmd3_iH8"
+curl --location 'http://localhost:8080/api/users/me' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6dWV2IiwiaWF0IjoxNzUwMDA5MDc1LCJleHAiOjE3NTAwOTU0NzV9.XiIMjvc4IXbZ50Og3fHSTbN3eStVXR5qgLerPteYx6U'
 
 
 Удалить пользователя

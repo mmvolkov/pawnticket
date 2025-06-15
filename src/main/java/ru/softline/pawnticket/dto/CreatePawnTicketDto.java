@@ -16,6 +16,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreatePawnTicketDto {
+
+    /** Можно передать готовый номер; если не передан, будет сгенерирован автоматически. */
+    private String ticketNumber;
+
     @NotBlank(message = "Item description is required")
     private String itemDescription;
 
@@ -26,6 +30,9 @@ public class CreatePawnTicketDto {
     @NotNull(message = "Interest rate is required")
     @Positive
     private BigDecimal interestRate;
+
+    /** Дата выдачи; если не указана, будет установлена текущая. */
+    private LocalDateTime issueDate;
 
     @NotNull(message = "Expiry date is required")
     private LocalDateTime expiryDate;

@@ -1,114 +1,116 @@
 package ru.softline.pawnticket.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.softline.pawnticket.dto.CreatePawnTicketDto;
+import ru.softline.pawnticket.dto.PawnTicketResponseDto;
 import ru.softline.pawnticket.entity.PawnTicket;
 import ru.softline.pawnticket.entity.User;
+import ru.softline.pawnticket.mapper.PawnTicketMapper;
 import ru.softline.pawnticket.repository.PawnTicketRepository;
+import ru.softline.pawnticket.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PawnTicketService {
 
+    private static final DateTimeFormatter TICKET_FMT =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
     private final PawnTicketRepository pawnTicketRepository;
-    private final UserService userService;
+    private final UserRepository       userRepository;
+    private final PawnTicketMapper     mapper;
 
-    @Transactional
-    public PawnTicket createPawnTicket(CreatePawnTicketDto dto) {
-        User currentUser = userService.getCurrentUser();
+    public PawnTicketResponseDto createPawnTicket(CreatePawnTicketDto dto) {
 
-        String clientName = currentUser.getFirstName() + " " + currentUser.getLastName();
-        if (clientName.trim().isEmpty() || clientName.equals(" ")) {
-            clientName = currentUser.getUsername();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User owner = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        PawnTicket entity = mapper.toEntity(dto);
+
+        if (entity.getIssueDate() == null) {
+            entity.setIssueDate(LocalDateTime.now());
+        }
+        if (entity.getTicketNumber() == null || entity.getTicketNumber().isBlank()) {
+            entity.setTicketNumber("PT-" + LocalDateTime.now().format(TICKET_FMT));
         }
 
-        PawnTicket pawnTicket = PawnTicket.builder()
-                .ticketNumber(generateTicketNumber())
-                .user(currentUser)
-                .clientName(clientName)
-                .itemDescription(dto.getItemDescription())
-                .loanAmount(dto.getLoanAmount())
-                .interestRate(dto.getInterestRate())
-                .expiryDate(dto.getExpiryDate())
-                .status(PawnTicket.Status.ACTIVE)
-                .build();
+        entity.setUser(owner);
+        entity.setStatus(PawnTicket.Status.ACTIVE);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
 
-        return pawnTicketRepository.save(pawnTicket);
+        return mapper.toDto(pawnTicketRepository.save(entity));
     }
 
-    public List<PawnTicket> getAllPawnTickets() {
-        return pawnTicketRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PawnTicketResponseDto> getAllPawnTickets() {
+        return pawnTicketRepository.findAll()
+                .stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public PawnTicket getPawnTicketById(Long id) {
-        return pawnTicketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pawn ticket not found with id: " + id));
+    @Transactional(readOnly = true)
+    public PawnTicketResponseDto getPawnTicketById(Long id) {
+        return mapper.toDto(findById(id));
     }
 
-    public List<PawnTicket> getPawnTicketsByUserId(Long userId) {
-        return pawnTicketRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<PawnTicketResponseDto> getPawnTicketsByUserId(Long userId) {
+        return pawnTicketRepository.findByUserId(userId)
+                .stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    @Transactional
-    public PawnTicket updatePawnTicket(Long id, CreatePawnTicketDto dto) {
-        PawnTicket pawnTicket = getPawnTicketById(id);
-
-        pawnTicket.setItemDescription(dto.getItemDescription());
-        pawnTicket.setLoanAmount(dto.getLoanAmount());
-        pawnTicket.setInterestRate(dto.getInterestRate());
-        pawnTicket.setExpiryDate(dto.getExpiryDate());
-
-        // Обновляем clientName если пользователь изменил свои данные
-        User user = pawnTicket.getUser();
-        String clientName = user.getFirstName() + " " + user.getLastName();
-        if (clientName.trim().isEmpty() || clientName.equals(" ")) {
-            clientName = user.getUsername();
-        }
-        pawnTicket.setClientName(clientName);
-
-        return pawnTicketRepository.save(pawnTicket);
+    public PawnTicketResponseDto updatePawnTicket(Long id, CreatePawnTicketDto dto) {
+        PawnTicket entity = findById(id);
+        mapper.updateEntity(entity, dto);
+        entity.setUpdatedAt(LocalDateTime.now());
+        return mapper.toDto(pawnTicketRepository.save(entity));
     }
 
-    @Transactional
-    public PawnTicket prolongPawnTicket(Long id, LocalDateTime prolongUntil) {
-        PawnTicket pawnTicket = getPawnTicketById(id);
+    public PawnTicketResponseDto prolongPawnTicket(Long id, LocalDateTime prolongUntil) {
+        PawnTicket entity = findById(id);
 
-        if (pawnTicket.getStatus() != PawnTicket.Status.ACTIVE &&
-                pawnTicket.getStatus() != PawnTicket.Status.PROLONGED) {
-            throw new RuntimeException("Cannot prolong ticket with status: " + pawnTicket.getStatus());
+        if (prolongUntil.isBefore(entity.getExpiryDate())) {
+            throw new IllegalArgumentException(
+                    "Prolongation date must be after current expiry date");
         }
 
-        if (prolongUntil.isBefore(pawnTicket.getExpiryDate())) {
-            throw new RuntimeException("Prolongation date must be after current expiry date");
-        }
+        entity.setProlongedUntil(prolongUntil);
+        entity.setStatus(PawnTicket.Status.ACTIVE);
+        entity.setUpdatedAt(LocalDateTime.now());
 
-        pawnTicket.setProlongedUntil(prolongUntil);
-        pawnTicket.setExpiryDate(prolongUntil);
-        pawnTicket.setStatus(PawnTicket.Status.PROLONGED);
-
-        return pawnTicketRepository.save(pawnTicket);
+        return mapper.toDto(pawnTicketRepository.save(entity));
     }
 
-    @Transactional
     public void deletePawnTicket(Long id) {
-        if (!pawnTicketRepository.existsById(id)) {
-            throw new RuntimeException("Pawn ticket not found with id: " + id);
-        }
         pawnTicketRepository.deleteById(id);
     }
 
-    public boolean isOwner(Long ticketId, Long userId) {
-        PawnTicket pawnTicket = getPawnTicketById(ticketId);
-        return pawnTicket.getUser().getId().equals(userId);
+    @Transactional(readOnly = true)
+    public boolean isOwner(Long ticketId, Long principalUserId) {
+        return pawnTicketRepository.existsByIdAndUserId(ticketId, principalUserId);
     }
 
-    private String generateTicketNumber() {
-        return "PT-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    private PawnTicket findById(Long id) {
+        return pawnTicketRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(NOT_FOUND, "Pawn ticket not found (id=" + id + ')'));
     }
 }

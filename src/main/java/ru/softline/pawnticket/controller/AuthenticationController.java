@@ -11,6 +11,7 @@ import ru.softline.pawnticket.dto.UserResponseDto;
 import ru.softline.pawnticket.entity.User;
 import ru.softline.pawnticket.security.JwtService;
 import ru.softline.pawnticket.service.AuthenticationService;
+import ru.softline.pawnticket.service.MapperService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,21 +20,12 @@ public class AuthenticationController {
 
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;
+    private final MapperService mapperService;
 
     @PostMapping("/signup")
     public ResponseEntity<UserResponseDto> register(@Valid @RequestBody RegisterUserDto registerUserDto) {
         User registeredUser = authenticationService.signup(registerUserDto);
-        UserResponseDto responseDto = UserResponseDto.builder()
-                .id(registeredUser.getId())
-                .username(registeredUser.getUsername())
-                .email(registeredUser.getEmail())
-                .firstName(registeredUser.getFirstName())
-                .lastName(registeredUser.getLastName())
-                .role(registeredUser.getRole())
-                .createdAt(registeredUser.getCreatedAt())
-                .updatedAt(registeredUser.getUpdatedAt())
-                .build();
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok(mapperService.toUserResponseDto(registeredUser));
     }
 
     @PostMapping("/login")
